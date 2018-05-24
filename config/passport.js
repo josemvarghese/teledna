@@ -30,13 +30,11 @@ passport.use(new LocalStrategy({ usernameField: 'email' }, (email, password, don
 			user.comparePassword(password, (err, isMatch) => {
 				if (err) { 
 					updateThrottle(user,done);
-					return done(err);
 				}
 				if (isMatch) {
 					return done(null, user);
 				}
 				updateThrottle(user,done);
-				return done(null, false, { msg: 'Unauthorized User.' });
 			});
 		}
 		else{
@@ -46,32 +44,43 @@ passport.use(new LocalStrategy({ usernameField: 'email' }, (email, password, don
 	});
 }));
 function updateThrottle(user,callback) {
-Throttle.find({userId:user._id},(err,throttleData)=>{
-						if(err){
-							console.log("error",err)
-						}
-						if(throttleData==null){
-							let newThrottleData = new Throttle({
-								userId:user._id,
-								hits:1
-							})
-							newThrottleData.save((err,success)=>{
-								if(!err){
-									console.log("saved successfully")
-								}
-							})
-						}
-						else{
-							if(throttleData.hits==3){
-								return callback(null, false, { msg: 'Try after sometime' })
-							}
-							else{
-								throttleData.hits++;
-								throttleData.save();
-							}
-						}
+	Throttle.find({userId:user._id},(err,throttleData)=>{
+		if(err){
+			console.log('error',err);
+		}
+		if(throttleData.length==0){
+			let newThrottleData = new Throttle({
+				userId:user._id,
+				hits:1
+			});
+			newThrottleData.save((err)=>{
+				if(!err){
+					console.log('saved successfully');
+					callback('err');
+				}
+			});
+		}
+		else{
+			console.log(throttleData[0]);
+			if(throttleData[0].hits==3){
+				callback(null, false, { msg: 'try after some time.' });
+			}
+			else{
+				Throttle.updateOne({_id:throttleData[0]._id},{$inc:{hits:1}},(err)=>{
+					if(err){
+						console.log('err');
+					}
+					else{
+						console.log('success');
+						callback('err');
+
+					}
+				});
+			}
+							
+		}
 						
-					})
+	});
 }
 
 
