@@ -5,6 +5,8 @@ const LocalStrategy = require('passport-local').Strategy;
 
 
 const User = require('../models/user');
+const Throttle = require('../models/throttle');
+
 
 passport.serializeUser((user, done) => {
 	done(null, user.id);
@@ -26,11 +28,14 @@ passport.use(new LocalStrategy({ usernameField: 'email' }, (email, password, don
 		}
 		if(user.password){
 			user.comparePassword(password, (err, isMatch) => {
-				if (err) { return done(err); }
+				if (err) { 
+					updateThrottle(user,done);
+					return done(err);
+				}
 				if (isMatch) {
-					console.log(user)
 					return done(null, user);
 				}
+				updateThrottle(user,done);
 				return done(null, false, { msg: 'Unauthorized User.' });
 			});
 		}
@@ -40,8 +45,34 @@ passport.use(new LocalStrategy({ usernameField: 'email' }, (email, password, don
 		}
 	});
 }));
-
-
+function updateThrottle(user,callback) {
+Throttle.find({userId:user._id},(err,throttleData)=>{
+						if(err){
+							console.log("error",err)
+						}
+						if(throttleData==null){
+							let newThrottleData = new Throttle({
+								userId:user._id,
+								hits:1
+							})
+							newThrottleData.save((err,success)=>{
+								if(!err){
+									console.log("saved successfully")
+								}
+							})
+						}
+						else{
+							if(throttleData.hits==3){
+								return callback(null, false, { msg: 'Try after sometime' })
+							}
+							else{
+								throttleData.hits++;
+								throttleData.save();
+							}
+						}
+						
+					})
+}
 
 
 /**

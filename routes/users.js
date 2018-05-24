@@ -7,37 +7,37 @@ const passportConfig = require('../config/passport');
 
 /* GET users listing. */
 users.get('/userslist',passportConfig.isAuthenticated, function(req, res, next) {
- User.find({},(err,data)=>{
- 	if(err){
- 		res.json({message:"something went wrong"});
- 	}
- 	else{
-		res.json({data:data});
- 	}
- })
+	User.find({},(err,data)=>{
+		if(err){
+			res.json({message:'something went wrong'});
+		}
+		else{
+			res.json({data:data});
+		}
+	});
 });
 
 
 users.post('/signup', function(req, res, next) {
-  User.findOne({ email: req.body.email }, (err, existingUser) => {
-  		let newUser = new User({
+	User.findOne({ email: req.body.email }, (err, existingUser) => {
+		let newUser = new User({
 			email:req.body.email,
 			password:req.body.password,
 			Name:req.body.name
-		})
+		});
 		if (err) {
-			res.json({message:"something went wrong"});
+			res.json({message:'something went wrong'});
 		}
 		if (existingUser) { 
-			res.json({message:"user already exists"});
+			res.json({message:'user already exists'});
 		}
 		else{
 			newUser.save((err) => {
 				if (err) {
-					res.json({message:"something went wrong"});
+					res.json({message:'something went wrong'});
 				}
 				else{
-					res.json({message:"signup successfully"});
+					res.json({message:'signup successfully'});
 				}
 			});
 		}
@@ -46,20 +46,20 @@ users.post('/signup', function(req, res, next) {
 });
 
 users.post('/signin', function(req, res, next) {
-  	passport.authenticate('local', (err, user, info) => {
+	passport.authenticate('local', (err, user, info) => {
 		if (err) { 
-			res.json({message:"something went wrong"});
+			res.json({message:'something went wrong'});
 		}
 		if (!user) {
-			res.json({message:"something went wrong"});
+			res.json({message:'something went wrong'});
 		}
 		req.logIn(user, (err) => {
 			if (err) {
-			res.json({message:"something went wrong"});
+				res.json({message:'something went wrong'});
 			}
 			else{
 
-				res.json({message:"loggedIn successfully",user:req.user});
+				res.json({message:'loggedIn successfully',user:req.user});
 			}
 
 		});
